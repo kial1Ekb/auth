@@ -1,0 +1,59 @@
+<%- include("header",{
+title:"Signup"
+}); -%>
+<div class="container">
+    <h1>Sign Up</h1>
+    <form id="signup-form">
+        <label for="user_name">Name</label>
+        <input type="text" class="input" name="name" id="user_name"
+               placeholder="Enter your name">
+        <label for="user_email">Email</label>
+        <input type="email" class="input" name="email"
+               id="user_email" placeholder="Enter your email">
+        <label for="user_pass">Password</label>
+        <input type="password" class="input" name="password"
+               id="user_pass" placeholder="Enter new password">
+        <% if(typeof msg != "undefined"){ %>
+            <div class="success-msg"><%= msg %></div>
+        <% }
+        if(typeof error !== "undefined"){ %>
+            <div class="err-msg"><%= error %></div>
+        <% } %>
+        <input type="submit" value="Sign Up">
+        <div class="link"><a href="./login">Login</a></div>
+    </form>
+</div>
+<%- include("footer"); -%>
+
+<script>
+    const form = document.getElementById("signup-form");
+
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const jsonData = {};
+        for (const [key, value] of formData.entries()) {
+            jsonData[key] = value;
+        }
+
+        fetch("/signup", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(jsonData)
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+
+                if (data.status === 0) {
+                    window.location.href = "/login"; // Редирект на страницу входа
+                } else {
+                    console.error("Signup failed");
+                }
+            })
+            .catch(error => console.error(error));
+    });
+</script>

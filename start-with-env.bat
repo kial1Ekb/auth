@@ -1,0 +1,1 @@
+restart-containers.bat && dotenv -e .env -- node index.js

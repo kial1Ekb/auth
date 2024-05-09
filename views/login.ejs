@@ -1,0 +1,215 @@
+<%- include("header",{
+title:"Login"
+}); -%>
+<div class="container">
+    <h1>Login</h1>
+    <form id="login-form">
+        <label for="user_email">Email</label>
+        <input type="email" class="input" name="email"
+               id="user_email" placeholder="Enter your email">
+        <label for="user_pass">Password</label>
+        <input type="password" class="input" name="password"
+               id="user_pass" placeholder="Enter new password">
+        <% if(typeof error !== "undefined"){ %>
+            <div class="err-msg"><%= error %></div>
+        <% } %>
+        <input type="submit" value="Login">
+        <div class="link"><a href="./signup">Sign Up</a></div>
+    </form>
+
+    <div id="g-sign-in-wrapper" style="margin-top: 1rem;">
+        <div class="g-icon-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" viewBox="0 0 48 48">
+                <g>
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                    <path fill="none" d="M0 0h48v48H0z"></path>
+                </g>
+            </svg>
+        </div>
+        <span id="sign-in-button-text" class="button-text">Login using Google</span>
+    </div>
+</div>
+<%- include("footer"); -%>
+
+<script>
+    // TODO: УДАЛИТЬ КОММЕНТАРИИ
+
+    let auth2, googleUser
+
+    let appStart = function() {
+        gapi.load('auth2', initSignInV2)
+    }
+
+    let initSignInV2 = function() {
+        auth2 = gapi.auth2.init({
+            client_id: '78971042064-fco4qr9hhotcehv0vtnph39of65ri2p6.apps.googleusercontent.com',
+            scope: 'profile'
+        })
+
+        // Listen for sign in changes
+        auth2.isSignedIn.listen(signinChanged)
+
+        // Listen for user changes
+        auth2.currentUser.listen(userChanged)
+
+        // Sign in the user if they are currently signed in.
+        if (auth2.isSignedIn.get() == true) {
+            auth2.signIn()
+        }
+
+        refreshValues()
+
+    } // End of initSignInV2
+
+    const signinChanged = function(val) {
+        console.log('Signin state changed to ', val)
+        // document.getElementById('signed-in-cell').innerText = val
+        if (auth2.isSignedIn.get()) {
+            buttonControl(false)
+            document.getElementById('button-sign-out').addEventListener('click', function() {
+                auth2.signOut()
+            })
+        } else {
+            buttonControl(true)
+        }
+    }
+
+    const userChanged = function(user) {
+        console.log('User now: ', user)
+        googleUser = user
+
+        updateGoogleUser()
+        // document.getElementById('curr-user-cell').innerText = JSON.stringify(user, undefined, 2)
+    }
+
+    const buttonControl = function(command) {
+        if (command) {
+            document.getElementById('sign-in-button-text').innerText = 'Sign in with Google'
+            document.getElementById('g-sign-in-wrapper').addEventListener('click', signIn, true)
+            document.getElementById('button-sign-out').style.display = 'none'
+
+        } else {
+            document.getElementById('sign-in-button-text').innerText = 'Signed in with Google'
+            console.log("Removing Event Listener")
+            document.getElementById('g-sign-in-wrapper').removeEventListener('click', signIn, true)
+            document.getElementById('button-sign-out').style.display = ''
+        }
+    }
+
+    // Wrapping Google's signIn inside a function expression so we can add/remove it when needed.
+    const signIn = function() {
+        auth2.signIn()
+    }
+
+    // Updates the properties in the Google User table using the current user.
+
+    const updateGoogleUser = function() {
+        // Check if the user is signed in
+        if (auth2.isSignedIn.get()) {
+
+            const profile = googleUser.getBasicProfile()
+            console.log(profile)
+
+            // Create a container with user info
+            const container = document.createElement('div')
+            container.id = 'user-details-wrapper'
+            const mainHeading = document.createElement('h1')
+            mainHeading.className = 'main-heading'
+            mainHeading.textContent = 'User details'
+            const heading = document.createElement('h2')
+            console.log(profile)
+            heading.textContent = profile.getName()
+            const avatar = document.createElement('img')
+            avatar.className = 'avatar'
+            avatar.src = profile.getImageUrl()
+            const email = document.createElement('a')
+            email.className = 'email'
+            email.textContent = profile.getEmail()
+            email.href = 'mailto:' + profile.getEmail()
+            email.target = '_blank'
+
+            // Append the container and children to the DOM
+            document.body.appendChild(container)
+            container.appendChild(mainHeading)
+            container.appendChild(heading)
+            container.appendChild(avatar)
+            container.appendChild(email)
+
+        } else {
+            // Get the user details container
+            const userDetailsContainer = document.getElementById('user-details-wrapper')
+            // Remove it
+            userDetailsContainer.parentNode.removeChild(userDetailsContainer)
+        }
+    }
+
+    // Retrieves the current user and signed in states from the GoogleAuth object.
+    const refreshValues = function() {
+        if (auth2.isSignedIn.get()) {
+            buttonControl(false)
+        } else {
+            buttonControl(true)
+        }
+    }
+
+    // Эта функция вспомогательная. Нужна для установки куки на клиенте.
+    // Как чекнуть: Браузер -> F12 -> Application (сверху) -> Cookies
+    function setCookie(name, value, hours) {
+        let expires = "";
+
+        if (hours) {
+            const date = new Date();
+            date.setTime(date.getTime() + (hours * 60 * 60 * 1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+
+        document.cookie = name + "=" + (value || "") + expires + "; path=/";
+    }
+
+    // Берем форму из HTML по её айдишнику
+    const form = document.getElementById("login-form");
+
+    // Вешаем на форму слушатель событий. На событие "submit", когда юзер
+    // подтверждает отправку формы на бэкэнд
+    form.addEventListener("submit", (e) => {
+        // Отменяем стандартное поведение формы, чтобы не было перезагрузки страниц
+        e.preventDefault();
+
+        // Конвертируем данные формы в JSON
+        const formData = new FormData(form);
+        const jsonData = {};
+
+        // Достаем из каждого поля формы ключ и значение и записываем в мапу (отображение) jsonData
+        for (const [key, value] of formData.entries()) {
+            jsonData[key] = value;
+        }
+
+        // Отправляем данные на сервер в формате JSON
+        fetch("/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(jsonData)
+        })
+            .then(response => response.json()) // Парсим ответ от сервера в формат JSON
+            .then(data => {
+                console.log(data);
+
+                if (data.status === 0) {
+                    // Сохраняем JWT токен в Cookies
+                    setCookie("token", data.token, 1);
+
+                    window.location.href = "/"; // Редирект на домашнюю
+                } else {
+                    console.error("Login failed");
+                }
+            }) // Выводим ответ в консоль
+            .catch(error => console.error(error)); // Обрабатываем ошибки (просто вывод на экран)
+    });
+
+    appStart();
+</script>
