@@ -1,17 +1,28 @@
-const router = require("express").Router();
+import { Router } from "express";
 
-const { body } = require("express-validator");
+const router = Router();
 
-const { homePage } = require("./controllers/homeController");
-const { loginPage, login } = require("./controllers/loginController");
-const { registerPage, register } = require("./controllers/registerController");
-const { verify } = require("jsonwebtoken");
+import {body} from "express-validator";
+import {loginPage, login} from "./controllers/loginController.cjs";
+import {registerPage, register} from "./controllers/registerController.cjs";
+import pkg from 'jsonwebtoken';
+import {homePage} from "./controllers/homeController.cjs";
+const {verify} = pkg;
 
 const validateToken = (req, res, next) => {
+    // Check for OAuth2
+    const { session } = res.locals;
+    console.log({ user: session?.user });
+
+    if (session) {
+        next();
+    }
+
+    // Check if logged with our auth
     const token = req.header("Authorization") || req.cookies.token;
 
     if (!token) {
-        return res.status(401).json({error: "Unauthorized"});
+        return res.redirect("/login");
     }
 
     try {
@@ -84,4 +95,4 @@ router.get("/logout", (req, res, next) => {
     res.redirect("/login");
 });
 
-module.exports = router;
+export default router;

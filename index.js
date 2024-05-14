@@ -1,9 +1,28 @@
-const express = require("express");
-const dotenv = require("dotenv");
-const session = require("express-session");
-const routes = require("./routes");
-const { join } = require("path");
-const cookieParser = require("cookie-parser");
+import express from "express";
+
+import dotenv from "dotenv";
+
+import session from "express-session";
+import {dirname, join} from "path";
+import { fileURLToPath } from 'url';
+
+import { ExpressAuth } from "@auth/express";
+import Google from "@auth/express/providers/google";
+import Github from "@auth/express/providers/github";
+
+import cookieParser from "cookie-parser";
+import routes from "./routes.js";
+import { getSession } from "@auth/express";
+
+const authConfig = { providers: [ Google, Github ] };
+
+export async function authSession(req, res, next) {
+    res.locals.session = await getSession(req, authConfig);
+    next()
+}
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Load environment variables from .env file
 dotenv.config();
@@ -14,12 +33,15 @@ app.set("views", join(__dirname, "views"));
 app.set("view engine", "ejs");
 
 // Enable JSON parsing for request bodies
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 // Cookie Parser
 app.use(cookieParser());
 
 // Sessions storage
+app.use(authSession);
+
 app.use(session({
     name: "session",
     secret: process.env.APP_SESSION_SECRET,
@@ -33,6 +55,9 @@ app.use(session({
 // Mount routes
 app.use(express.static(join(__dirname, 'public')));
 app.use(routes);
+
+// Mount OAuth2
+app.use("/api/auth/*", ExpressAuth(authConfig));
 
 // Centralized error handling
 app.use((err, req, res, next) => {
